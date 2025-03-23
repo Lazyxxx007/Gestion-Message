@@ -1,0 +1,36 @@
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
+public class ChatServer {
+    private static Set<PrintWriter> clients = new HashSet<>();
+
+    public static void main(String[] args) {
+        System.out.println("Server running...");
+        try (ServerSocket serverSocket = new ServerSocket(12345)) {
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                clients.add(out);
+
+                new Thread(() -> {
+                    try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
+                        String message;
+                        while ((message = in.readLine()) != null) {
+                            System.out.println("Received: " + message);
+                            for (PrintWriter client : clients) {
+                                client.println(message);
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } finally {
+                        clients.remove(out);
+                    }
+                }).start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
