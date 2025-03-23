@@ -169,36 +169,3 @@ public class BaseDeDonneesChat {
         return null;
     }
 }
-
-// Classe représentant un utilisateur
-class Utilisateur {
-    private String nomUtilisateur, motDePasseHache, statut;
-
-    public Utilisateur(String nomUtilisateur, String motDePasseHache, String statut) {
-        this.nomUtilisateur = nomUtilisateur;
-        this.motDePasseHache = motDePasseHache;
-        this.statut = statut;
-    }
-
-    public String obtenirNomUtilisateur() { return nomUtilisateur; }
-    public String obtenirMotDePasseHache() { return motDePasseHache; }
-    public String obtenirStatut() { return statut; }
-}
-
-// Classe représentant un message
-class Message {
-    private String expediteur, destinataire, contenu;
-    private Timestamp horodatage;
-
-    public Message(String expediteur, String destinataire, String contenu, Timestamp horodatage) {
-        this.expediteur = expediteur;
-        this.destinataire = destinataire;
-        this.contenu = contenu;
-        this.horodatage = horodatage;
-    }
-
-    public String obtenirExpediteur() { return expediteur; }
-    public String obtenirDestinataire() { return destinataire; }
-    public String obtenirContenu() { return contenu; }
-    public Timestamp obtenirHorodatage() { return horodatage; }
-}
