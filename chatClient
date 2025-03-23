@@ -1,0 +1,135 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.net.Socket;
+import java.util.List;
+
+public class ChatClient {
+    private JFrame frame;
+    private JTextArea chatArea;
+    private JTextField messageField;
+    private JButton sendButton, connectButton, themeButton, notifyButton;
+    private JList<String> userList;
+    private DefaultListModel<String> userListModel;
+    private Socket socket;
+    private BufferedReader in;
+    private PrintWriter out;
+    private boolean notificationsEnabled = true;
+    private boolean darkTheme = false;
+
+    public ChatClient() {
+        frame = new JFrame("Chat Client");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(500, 600);
+        frame.setLayout(new BorderLayout());
+
+        chatArea = new JTextArea();
+        chatArea.setEditable(false);
+        chatArea.setFont(new Font("Arial", Font.PLAIN, 14));
+        frame.add(new JScrollPane(chatArea), BorderLayout.CENTER);
+
+        JPanel panel = new JPanel(new BorderLayout());
+        messageField = new JTextField();
+        panel.add(messageField, BorderLayout.CENTER);
+
+        sendButton = new JButton("Send");
+        panel.add(sendButton, BorderLayout.EAST);
+        frame.add(panel, BorderLayout.SOUTH);
+
+        JPanel topPanel = new JPanel();
+        connectButton = new JButton("Connect");
+        themeButton = new JButton("Switch Theme");
+        notifyButton = new JButton("Toggle Notifications");
+        topPanel.add(connectButton);
+        topPanel.add(themeButton);
+        topPanel.add(notifyButton);
+        frame.add(topPanel, BorderLayout.NORTH);
+
+        userListModel = new DefaultListModel<>();
+        userList = new JList<>(userListModel);
+        userList.setBorder(BorderFactory.createTitledBorder("Online Users"));
+        frame.add(new JScrollPane(userList), BorderLayout.EAST);
+
+        connectButton.addActionListener(e -> connectToServer("localhost", 12345));
+        sendButton.addActionListener(e -> sendMessage());
+        themeButton.addActionListener(e -> switchTheme());
+        notifyButton.addActionListener(e -> toggleNotifications());
+
+        frame.setVisible(true);
+    }
+
+    public void connectToServer(String ip, int port) {
+        try {
+            socket = new Socket(ip, port);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+            chatArea.append("Connected to server\n");
+
+            new Thread(() -> {
+                try {
+                    String message;
+                    while ((message = in.readLine()) != null) {
+                        if (message.startsWith("USERLIST:")) {
+                            updateUserList(message.substring(9).split(","));
+                        } else {
+                            chatArea.append(message + "\n");
+                            if (notificationsEnabled) {
+                                JOptionPane.showMessageDialog(frame, "New message received!", "Notification", JOptionPane.INFORMATION_MESSAGE);
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    chatArea.append("Connection lost\n");
+                }
+            }).start();
+        } catch (IOException e) {
+            chatArea.append("Failed to connect\n");
+        }
+    }
+
+    public void sendMessage() {
+        if (socket != null && socket.isConnected()) {
+            String message = messageField.getText().trim();
+            if (!message.isEmpty()) {
+                out.println(message);
+                messageField.setText("");
+            }
+        }
+    }
+
+    public void updateUserList(String[] users) {
+        SwingUtilities.invokeLater(() -> {
+            userListModel.clear();
+            for (String user : users) {
+                userListModel.addElement(user);
+            }
+        });
+    }
+
+    public void switchTheme() {
+        darkTheme = !darkTheme;
+        if (darkTheme) {
+            frame.getContentPane().setBackground(Color.DARK_GRAY);
+            chatArea.setBackground(Color.BLACK);
+            chatArea.setForeground(Color.WHITE);
+            messageField.setBackground(Color.BLACK);
+            messageField.setForeground(Color.WHITE);
+        } else {
+            frame.getContentPane().setBackground(Color.LIGHT_GRAY);
+            chatArea.setBackground(Color.WHITE);
+            chatArea.setForeground(Color.BLACK);
+            messageField.setBackground(Color.WHITE);
+            messageField.setForeground(Color.BLACK);
+        }
+    }
+
+    public void toggleNotifications() {
+        notificationsEnabled = !notificationsEnabled;
+        JOptionPane.showMessageDialog(frame, "Notifications " + (notificationsEnabled ? "enabled" : "disabled"), "Settings", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(ChatClient::new);
+    }
+}
