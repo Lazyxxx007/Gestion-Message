@@ -1,4 +1,5 @@
-Client -> Interface et gestion interface/
+Client -> Interface et gestion interface
+
 ClientUtils:
 Établir une connexion au serveur.
 Envoyer des messages (soit des messages de chat, soit des messages système comme une déconnexion ou une demande de contact).
